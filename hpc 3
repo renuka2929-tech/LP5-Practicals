@@ -1,0 +1,58 @@
+#include <iostream>
+#include <omp.h>
+
+using namespace std;
+
+int main() {
+
+    int arr[] = {10, 20, 30, 40, 50};
+    int n = 5;
+
+    int min = arr[0];
+    int max = arr[0];
+    int sum = 0;
+
+    double avg;
+
+    // Parallel Sum
+    #pragma omp parallel for reduction(+:sum)
+    for(int i = 0; i < n; i++) {
+        sum += arr[i];
+    }
+
+    // Parallel Minimum
+    #pragma omp parallel for reduction(min:min)
+    for(int i = 0; i < n; i++) {
+
+        if(arr[i] < min)
+            min = arr[i];
+    }
+
+    // Parallel Maximum
+    #pragma omp parallel for reduction(max:max)
+    for(int i = 0; i < n; i++) {
+
+        if(arr[i] > max)
+            max = arr[i];
+    }
+
+    // Average
+    avg = (double)sum / n;
+
+    // Output
+    cout << "Array Elements: ";
+
+    for(int i = 0; i < n; i++) {
+        cout << arr[i] << " ";
+    }
+
+    cout << "\n\nSum = " << sum;
+    cout << "\nMinimum = " << min;
+    cout << "\nMaximum = " << max;
+    cout << "\nAverage = " << avg;
+
+    return 0;
+}
+
+//g++ filename.cpp -fopenmp -o output
+./output
