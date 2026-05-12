@@ -1,0 +1,149 @@
+# ============================================
+# Multiclass Classification using Deep Neural Network
+# OCR Letter Recognition Dataset
+# ============================================
+
+# Import Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from google.colab import files
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# ============================================
+# Upload CSV File
+# ============================================
+uploaded = files.upload()
+
+# ============================================
+# Load Dataset
+# ============================================
+data = pd.read_csv("letter-recognition.csv")
+
+# Display Dataset
+print("\nDataset:\n")
+print(data.head())
+
+# ============================================
+# Input and Output
+# ============================================
+
+# First Column = Output Class
+y = data.iloc[:, 0]
+
+# Remaining Columns = Features
+X = data.iloc[:, 1:]
+
+# ============================================
+# Encode Output Labels
+# ============================================
+encoder = LabelEncoder()
+
+y = encoder.fit_transform(y)
+
+# ============================================
+# Split Dataset
+# ============================================
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# ============================================
+# Feature Scaling
+# ============================================
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# ============================================
+# Create Deep Neural Network
+# ============================================
+model = Sequential()
+
+# Hidden Layer 1
+model.add(Dense(128, activation='relu', input_shape=(X_train.shape[1],)))
+
+# Hidden Layer 2
+model.add(Dense(64, activation='relu'))
+
+# Output Layer
+model.add(Dense(26, activation='softmax'))
+
+# ============================================
+# Compile Model
+# ============================================
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+# ============================================
+# Train Model
+# ============================================
+history = model.fit(
+    X_train,
+    y_train,
+    epochs=20,
+    batch_size=32,
+    validation_split=0.2
+)
+
+# ============================================
+# Evaluate Model
+# ============================================
+loss, accuracy = model.evaluate(X_test, y_test)
+
+print("\nAccuracy:", accuracy)
+
+# ============================================
+# Predictions
+# ============================================
+predictions = model.predict(X_test)
+
+# Convert Prediction Probabilities to Classes
+predicted_classes = np.argmax(predictions, axis=1)
+
+# ============================================
+# Actual vs Predicted
+# ============================================
+print("\nActual vs Predicted:\n")
+
+limit = min(10, len(predictions))
+
+for i in range(limit):
+
+    actual = encoder.inverse_transform([y_test[i]])[0]
+
+    predicted = encoder.inverse_transform([predicted_classes[i]])[0]
+
+    print("Actual:", actual, " Predicted:", predicted)
+
+# ============================================
+# Accuracy Graph
+# ============================================
+plt.plot(history.history['accuracy'])
+
+plt.title("Model Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+
+plt.show()
+
+# ============================================
+# Save Model
+# ============================================
+model.save("ocr_letter_model.h5")
+
+print("\nModel Saved Successfully")
