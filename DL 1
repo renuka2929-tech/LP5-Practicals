@@ -1,0 +1,138 @@
+# ================================
+# Boston Housing Price Prediction
+# Using Deep Neural Network
+# ================================
+
+# Import Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from google.colab import files
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# ================================
+# Upload CSV File
+# ================================
+uploaded = files.upload()
+
+# ================================
+# Load Dataset
+# ================================
+data = pd.read_csv("HousingData.csv")
+
+# Display Dataset
+print("\nDataset:\n")
+print(data.head())
+
+# ================================
+# Remove Missing Values
+# ================================
+data = data.dropna()
+
+# ================================
+# Input and Output
+# ================================
+X = data.drop("MEDV", axis=1)
+
+y = data["MEDV"]
+
+# ================================
+# Split Dataset
+# ================================
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# ================================
+# Feature Scaling
+# ================================
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# ================================
+# Create Deep Neural Network
+# ================================
+model = Sequential()
+
+# Hidden Layer 1
+model.add(Dense(64, activation='relu', input_shape=(X_train.shape[1],)))
+
+# Hidden Layer 2
+model.add(Dense(32, activation='relu'))
+
+# Output Layer
+model.add(Dense(1))
+
+# ================================
+# Compile Model
+# ================================
+model.compile(
+    optimizer='adam',
+    loss='mean_squared_error',
+    metrics=['mae']
+)
+
+# ================================
+# Train Model
+# ================================
+model.fit(
+    X_train,
+    y_train,
+    epochs=100,
+    batch_size=16
+)
+
+# ================================
+# Evaluate Model
+# ================================
+loss, mae = model.evaluate(X_test, y_test)
+
+print("\nMean Absolute Error:", mae)
+
+# ================================
+# Predict House Prices
+# ================================
+predictions = model.predict(X_test)
+
+# ================================
+# Actual vs Predicted
+# ================================
+print("\nActual Price vs Predicted Price\n")
+
+for i in range(len(predictions)):
+    print(
+        "Actual:",
+        y_test.iloc[i],
+        " Predicted:",
+        predictions[i][0]
+    )
+
+# ================================
+# Graph
+# ================================
+plt.scatter(y_test, predictions)
+
+plt.xlabel("Actual Prices")
+plt.ylabel("Predicted Prices")
+
+plt.title("Actual vs Predicted House Prices")
+
+plt.show()
+
+# ================================
+# Save Model
+# ================================
+model.save("boston_house_model.h5")
+
+print("\nModel Saved Successfully")
